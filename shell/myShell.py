@@ -84,11 +84,13 @@ def myPipe(cmd):
         os.dup2(pw, 1)
         os.close(pw)
 
+        cmd1 = cmd[:cmd.index("|")]
+
         for dir in re.split(":", os.environ['PATH']):
-            prog1 = "%s/%s" % (dir, cmd[0])
+            prog1 = "%s/%s" % (dir, cmd1[0])
 
             try:
-                os.execve(prog1, cmd, os.environ)
+                os.execve(prog1, cmd1, os.environ)
             except FileNotFoundError:
                 pass
             
@@ -99,11 +101,13 @@ def myPipe(cmd):
         os.dup2(pr, 0)
         os.close(pr)
 
+        cmd2 = cmd[cmd.index("|")+1:]
+
         for dir in re.split(":", os.environ['PATH']):
-            prog2 = "%s/%s" % (dir, cmd[0])
+            prog2 = "%s/%s" % (dir, cmd2[0])
 
             try:
-                os.execve(prog2, cmd, os.environ)
+                os.execve(prog2, cmd2, os.environ)
             except FileNotFoundError:
                 pass
             
