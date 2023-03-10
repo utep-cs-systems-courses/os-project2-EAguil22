@@ -74,9 +74,44 @@ def redir2(pid, cmd):
 
         
                 
-
+def myPipe(cmd):
+    pr, pw = os.pipe()
     
-# def myPipe():
+    pid1 = os.fork()
+    
+    if pid1 == 0:
+        os.close(pr)
+        os.dup2(pw, 1)
+        os.close(pw)
+
+        for dir in re.split(":", os.environ['PATH']):
+            prog1 = "%s/%s" % (dir, cmd[0])
+
+            try:
+                os.execve(prog1, cmd, os.environ)
+            except FileNotFoundError:
+                pass
+            
+    pid2 = os.fork()
+        
+    if pid2 == 0:
+        os.close(pw)
+        os.dup2(pr, 0)
+        os.close(pr)
+
+        for dir in re.split(":", os.environ['PATH']):
+            prog2 = "%s/%s" % (dir, cmd[0])
+
+            try:
+                os.execve(prog2, cmd, os.environ)
+            except FileNotFoundError:
+                pass
+            
+
+    os.close(pr)
+    os.close(pw)
+    os.waitpid(pid1,0)
+    os.waitpid(pid2,0)
     
 
 def progExec(pid, args):
@@ -123,13 +158,7 @@ while True:
     else:
         
         if "|" in cmd:
-            pr, pw = os.pipe()
-
-            for fd in (pr, pw):
-                os.set_inheritable(fd, True)
-
-            rc = os.fork()
-            myPipe(rc, cmd, pr, pw)
+            myPipe(cmd)
 
         elif ">" in cmd:
             rc = os.fork()
